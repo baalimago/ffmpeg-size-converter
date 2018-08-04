@@ -8,8 +8,13 @@ Minimum bitrate added to ensure quality. Script adjusts the scale of the clip if
 If height of the clip becomes less than 250 pixels (and still can't reach minimum br) script aborts since it cannot reach target.
 
 ## Requirements
-Needs ffmpeg added to environment path in order to function
-Script needs to be run from the same location as the movie file
+Needs ffmpeg added to environment path in order to function <br>
+Script needs to be run from the same location as the movie file <br>
+
+### Installation notes
+Can be run as an ordinary powershell script if the code is extracted from the function within and saved as "whateveryouwanttocallit.ps1", then exectued as ./whateveryouwanttocallit.ps1 -in ... -out ... in powershell.
+
+Personally I've placed the module inside the powershell module library (Program Files\WindowsPowerShell\Modules\FfmpegScripts\) so it can be called globally 
 
 ## Properties
 * -in: File name of clip input
