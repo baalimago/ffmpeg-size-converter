@@ -136,7 +136,7 @@ function Ffmpeg-Size-Converter{
 
             #Target filesize hit, within precision, close iteration script is complete.
             $br = [math]::Floor($br)
-            echo "Target hit within $p kB precision, after $count iterations, file size: $curr_fs kB, bit rate: $br, file aspect ratio: $ratio_string"
+            echo "Target hit within $p kB precision, after $count iterations, output name: $out, file size: $curr_fs kB, bit rate: $br, file aspect ratio: $ratio_string"
             $iterate = 0
         }
 
