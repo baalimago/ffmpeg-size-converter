@@ -1,7 +1,7 @@
 function Ffmpeg-Size-Converter{
     param(
-    [Parameter(Mandatory=$true)][string]$in,
-    [Parameter(Mandatory=$true)][string]$out,
+    [Parameter(Mandatory=$true)][string]$i,
+    [Parameter(Mandatory=$true)][string]$o,
     [Parameter(Mandatory=$true)][string]$t_fs,
     [int]$p = 50,
     [int]$min_br = 350
@@ -10,13 +10,13 @@ function Ffmpeg-Size-Converter{
     $iterate = 1
     $count = 0
     $max_fs = [string]$t_fs + "K"
-    $in_pre = $in.Substring(0, 2)
+    $i_pre = $i.Substring(0, 2)
 
-    if($in_pre -eq ".\"){
-        $in = $in.Substring(2)
+    if($i_pre -eq ".\"){
+        $i = $i.Substring(2)
     }
 
-    if(!(test-path $in)){
+    if(!(test-path $i)){
         echo "File not found. Breaking"
         return
     }
@@ -25,7 +25,7 @@ function Ffmpeg-Size-Converter{
 
     $objShell = New-Object -ComObject Shell.Application 
     $objFolder = $objShell.Namespace($directorypath)
-    $objFile = $objFolder.ParseName($in)
+    $objFile = $objFolder.ParseName($i)
 
 
     #Getting object properties the really weird way because windows is windows. Found
@@ -53,6 +53,8 @@ function Ffmpeg-Size-Converter{
 
     #Approximation of bitrate to decrease need of adjustment, doesn't do much but at least something. 
     $br = 24288 / $sec
+    #Max BR aproximation times "a little". Any quality above this is too high bitrate anyway.
+    $max_br = $br * 1.5
 
     if($br -lt $min_br){
         echo "Approximation too small, setting to min bitrate: $min_br"
@@ -67,19 +69,19 @@ function Ffmpeg-Size-Converter{
         $br_K = [string]$br + "K"
     
         #Remove previous iteration 
-        if(test-path $out){Remove-Item $out}
+        if(test-path $o){Remove-Item $o}
     
         #If bitrate is too low for current resolution, change aspect ratio (done further down after result is analyzed)
         if($ratio_adjust){
-            ffmpeg -i $in -c:v libvpx -b:v $br_K -an  -s $ratio_string -c:a libvorbis $out
+            ffmpeg -loglevel panic -i $i -c:v libvpx -b:v $br_K -an  -s $ratio_string -c:a libvorbis $o
         }else{
-            ffmpeg -i $in -c:v libvpx -b:v $br_K -an  -c:a libvorbis $out
+            ffmpeg -loglevel panic -i $i -c:v libvpx -b:v $br_K -an  -c:a libvorbis $o
         }
 
         echo "`n----- Adjustments:"
     
         #Get filesize
-        $curr_fs = Get-ChildItem $out | % {[int]($_.length / 1kb)}
+        $curr_fs = Get-ChildItem $o | % {[int]($_.length / 1kb)}
     
 
         #If current filesize is too large (upper limit is more important than lower), decrease by
@@ -127,6 +129,10 @@ function Ffmpeg-Size-Converter{
                 }else{
                     echo "Bitrate under min limit, adjusting scale to $ratio_string, bitrate: $br"
                 }
+            }elseif($br -gt $max_br){
+                #Bit rate too high, clip is probably too short to have it's bitrate increased.
+                $iterate = 0
+                echo "Clip too short. Aborting. End result: $count iterations, output name: $o, file size: $curr_fs kB, bit rate: $br, file aspect ratio: $ratio_string"
             }else{
                 $br = $br * ($t_fs / $curr_fs);
 
@@ -136,7 +142,7 @@ function Ffmpeg-Size-Converter{
 
             #Target filesize hit, within precision, close iteration script is complete.
             $br = [math]::Floor($br)
-            echo "Target hit within $p kB precision, after $count iterations, output name: $out, file size: $curr_fs kB, bit rate: $br, file aspect ratio: $ratio_string"
+            echo "Target hit within $p kB precision, after $count iterations, output name: $o, file size: $curr_fs kB, bit rate: $br, file aspect ratio: $ratio_string"
             $iterate = 0
         }
 
