@@ -5,4 +5,4 @@
 * -p: Precision, how close to target filesize it needs to be. Default is 50kB
 * -min_br: Minimum bitrate allowed. Default is 300 kB
 
-it has tons of bugs and isn't really working that well, it gets the job done though
+it has tons of bugs and isn't really working that well, it gets the job done though... sometimes
